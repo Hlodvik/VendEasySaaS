@@ -1,0 +1,14 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Vend.Data
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+
+<button class="btn btn-link" @onclick="HandleLogout">Log out</button>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/");
+    }
+}

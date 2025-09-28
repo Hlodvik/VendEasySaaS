@@ -1,0 +1,91 @@
+﻿@page "/business-signup"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Vend.Data
+
+@inject UserManager<AppUser> UserManager
+@inject SignInManager<AppUser> SignInManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject NavigationManager Nav
+
+<h3>Business Sign Up</h3>
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleSignup">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText @bind-Value="registerModel.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText @bind-Value="registerModel.Password" class="form-control" type="password" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Confirm Password</label>
+        <InputText @bind-Value="registerModel.ConfirmPassword" class="form-control" type="password" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Business Name</label>
+        <InputText @bind-Value="registerModel.BusinessName" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Sign Up</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private RegisterModel registerModel = new();
+    private string? errorMessage;
+
+    private async Task HandleSignup()
+    {
+        // Ensure role exists
+        if (!await RoleManager.RoleExistsAsync("Business"))
+            await RoleManager.CreateAsync(new IdentityRole("Business"));
+
+        var user = new AppUser
+            {
+                UserName = registerModel.Email,
+                Email = registerModel.Email
+            };
+
+        var result = await UserManager.CreateAsync(user, registerModel.Password);
+
+        if (result.Succeeded)
+        {
+            // Assign Business role
+            await UserManager.AddToRoleAsync(user, "Business");
+
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            Nav.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    public class RegisterModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, MinLength(8)]
+        public string Password { get; set; } = string.Empty;
+
+        [Compare(nameof(Password))]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required]
+        public string BusinessName { get; set; } = string.Empty;
+    }
+}
