@@ -19,7 +19,7 @@ builder.Services.AddDbContext<IdContext>(options =>
 // Add Identity services
 builder.Services.AddDefaultIdentity<AppUser>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false; // disable for now, re-enable after email setup
+    options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = true;
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 8;
@@ -49,12 +49,12 @@ app.MapRazorPages();          // enables Identity pages
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// Seed roles and admin user
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     await IdentitySeed.SeedRolesAndAdminAsync(roleManager, userManager);
 }
+
 
 await app.RunAsync();
