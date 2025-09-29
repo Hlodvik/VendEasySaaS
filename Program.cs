@@ -5,29 +5,26 @@ using Vend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connect Identity DbContext to Azure SQL
+// Db + Identity (yours as-is)
 builder.Services.AddDbContext<IdContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null
-        )
-    ));
-
-// Add Identity services
-builder.Services.AddDefaultIdentity<AppUser>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 8;
-})
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
+builder.Services
+    .AddDefaultIdentity<AppUser>(o =>
+    {
+        o.SignIn.RequireConfirmedAccount = false; // until email is wired up
+        o.Password.RequireDigit = true;
+        o.Password.RequireUppercase = true;
+        o.Password.RequiredLength = 8;
+    })
     .AddEntityFrameworkStores<IdContext>();
 
+// Keep Razor Pages for Identity UI
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+
+// This is the Blazor Web App (server interactivity)
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
@@ -39,22 +36,24 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();          // enables Identity pages
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+// Identity UI pages
+app.MapRazorPages();
 
+// Mount your component app (replaces _Host.cshtml approach)
+app.MapRazorComponents<App>()
+   .AddInteractiveServerRenderMode();
+
+// (optional) your seeding code
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     await IdentitySeed.SeedRolesAndAdminAsync(roleManager, userManager);
 }
-
 
 await app.RunAsync();
