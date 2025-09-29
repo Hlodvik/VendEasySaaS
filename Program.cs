@@ -48,12 +48,12 @@ app.MapRazorPages();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
-// (optional) your seeding code
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    await IdentitySeed.SeedRolesAndAdminAsync(roleManager, userManager);
-}
+//// (optional) your seeding code
+//using (var scope = app.Services.CreateScope())
+//{
+//    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+//    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+//    await IdentitySeed.SeedRolesAndAdminAsync(roleManager, userManager);
+//}
 
 await app.RunAsync();
